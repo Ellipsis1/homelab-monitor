@@ -8,6 +8,8 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -21,9 +23,13 @@ import java.util.stream.Collectors;
 @Service
 public class ContainerService {
 
+    @Value("${docker.host}")
+    private String dockerHost;
+
+    private DockerClient dockerClient;
+
     private final ContainerRepository containerRepository;
     private final ContainerEventProducer eventProducer;
-    private final DockerClient dockerClient;
 
     // Tracks last known status of each container in memory
     private final Map<String, String> lastKnownStatus = new HashMap<>();
@@ -32,14 +38,17 @@ public class ContainerService {
                             ContainerEventProducer eventProducer) {
         this.containerRepository = containerRepository;
         this.eventProducer = eventProducer;
+    }
 
+    @PostConstruct
+    public void init() {
         DefaultDockerClientConfig config = DefaultDockerClientConfig
                 .createDefaultConfigBuilder()
-                .withDockerHost("tcp://localhost:2375")
+                .withDockerHost(dockerHost)
                 .build();
 
         ApacheDockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-                .dockerHost(URI.create("tcp://localhost:2375"))
+                .dockerHost(URI.create(dockerHost))
                 .build();
 
         this.dockerClient = DockerClientImpl.getInstance(config, httpClient);
@@ -72,7 +81,7 @@ public class ContainerService {
                 .map(container -> ContainerInfo.builder()
                         .id(container.getId().substring(0, 12))
                         .name(container.getNames()[0].replaceFirst("^/", ""))
-                        .status(container.getStatus())
+                        .status(container.getImage())
                         .image(container.getImage())
                         .checkedAt(LocalDateTime.now())
                         .build())
@@ -85,7 +94,6 @@ public class ContainerService {
             String currentStatus = normalizeStatus(container.getStatus());
             String previousStatus = lastKnownStatus.get(name);
 
-            // Skip first poll
             if (previousStatus == null) {
                 lastKnownStatus.put(name, currentStatus);
                 continue;
@@ -115,7 +123,6 @@ public class ContainerService {
 
             lastKnownStatus.put(name, currentStatus);
         }
-
     }
 
     private String normalizeStatus(String rawStatus) {
@@ -132,7 +139,7 @@ public class ContainerService {
     public void scheduledpoll() {
         try {
             fetchAndSave();
-        }  catch (Exception e) {
+        } catch (Exception e) {
             System.out.println("Poll failed - database may be unavailable: " + e.getMessage());
         }
     }
@@ -149,7 +156,6 @@ public class ContainerService {
 
     public void restartContainer(String name) {
         try {
-            // Find the full container ID from Docker
             dockerClient.listContainersCmd()
                     .withShowAll(true)
                     .exec()
@@ -175,7 +181,7 @@ public class ContainerService {
                             () -> System.out.println("Container not found: " + name)
                     );
         } catch (Exception e) {
-            System.out.println("Failes to restart container: " + name + " - " + e.getMessage());
+            System.out.println("Failed to restart container: " + name + " - " + e.getMessage());
         }
     }
 
