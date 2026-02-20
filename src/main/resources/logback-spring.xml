@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!-- Kafka -->
+    <logger name="org.apache.kafka.clients.NetworkClient" level="OFF"/>
+    <logger name="org.apache.kafka.clients.producer" level="OFF"/>
+    <logger name="org.springframework.kafka.support.LoggingProducerListener" level="OFF"/>
+
+    <!-- Database connection failures -->
+    <logger name="com.zaxxer.hikari" level="OFF"/>
+    <logger name="org.hibernate.engine.jdbc.spi.SqlExceptionHelper" level="OFF"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
