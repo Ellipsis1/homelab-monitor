@@ -22,10 +22,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class ContainerService {
-
-    @Value("${docker.host}")
-    private String dockerHost;
-
     private DockerClient dockerClient;
 
     private final ContainerRepository containerRepository;
@@ -42,13 +38,18 @@ public class ContainerService {
 
     @PostConstruct
     public void init() {
+        String host = System.getenv("DOCKER_HOST_URI");
+        if (host == null) host = "tcp://localhost:2375";
+
+        System.out.println("Connecting to Docker at: " + host);
+
         DefaultDockerClientConfig config = DefaultDockerClientConfig
                 .createDefaultConfigBuilder()
-                .withDockerHost(dockerHost)
+                .withDockerHost(host)
                 .build();
 
         ApacheDockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-                .dockerHost(URI.create(dockerHost))
+                .dockerHost(URI.create(host))
                 .build();
 
         this.dockerClient = DockerClientImpl.getInstance(config, httpClient);
