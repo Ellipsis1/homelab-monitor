@@ -9,11 +9,9 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -38,21 +36,18 @@ public class ContainerService {
 
     @PostConstruct
     public void init() {
-        String host = System.getenv("DOCKER_HOST_URI");
-        if (host == null) host = "tcp://localhost:2375";
-
-        System.out.println("Connecting to Docker at: " + host);
-
         DefaultDockerClientConfig config = DefaultDockerClientConfig
                 .createDefaultConfigBuilder()
-                .withDockerHost(host)
+
                 .build();
 
         ApacheDockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-                .dockerHost(URI.create(host))
+                .dockerHost(config.getDockerHost())
                 .build();
 
         this.dockerClient = DockerClientImpl.getInstance(config, httpClient);
+
+        System.out.println("Connecting to Docker at: " + config.getDockerHost())
     }
 
     public List<ContainerInfo> fetchAndSave() {
