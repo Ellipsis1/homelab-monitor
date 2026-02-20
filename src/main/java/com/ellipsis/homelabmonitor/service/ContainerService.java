@@ -38,11 +38,12 @@ public class ContainerService {
     public void init() {
         DefaultDockerClientConfig config = DefaultDockerClientConfig
                 .createDefaultConfigBuilder()
-
+                .withDockerHost("unix:///var/run/docker.sock")
                 .build();
 
         ApacheDockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
                 .dockerHost(config.getDockerHost())
+                .sslConfig(config.getSSLConfig())
                 .build();
 
         this.dockerClient = DockerClientImpl.getInstance(config, httpClient);
