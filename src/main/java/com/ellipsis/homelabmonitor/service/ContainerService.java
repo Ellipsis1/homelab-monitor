@@ -7,10 +7,11 @@ import com.ellipsis.homelabmonitor.repository.ContainerRepository;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
-import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import jakarta.annotation.PostConstruct;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
+import com.github.dockerjava.transport.DockerHttpClient;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -36,19 +37,21 @@ public class ContainerService {
 
     @PostConstruct
     public void init() {
+        String host = System.getenv("DOCKER_HOST");
+        if (host == null || host.isEmpty()) host = "tcp://localhost:2375";
+
+        System.out.println("Connecting to Docker at: " + host);
+
         DefaultDockerClientConfig config = DefaultDockerClientConfig
                 .createDefaultConfigBuilder()
-                .withDockerHost("unix:///var/run/docker.sock")
+                .withDockerHost(host)
                 .build();
 
-        ApacheDockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
+        DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder()
                 .dockerHost(config.getDockerHost())
-                .sslConfig(config.getSSLConfig())
                 .build();
 
         this.dockerClient = DockerClientImpl.getInstance(config, httpClient);
-
-        System.out.println("Connecting to Docker at: " + config.getDockerHost());
     }
 
     public List<ContainerInfo> fetchAndSave() {
