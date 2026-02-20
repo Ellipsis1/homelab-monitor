@@ -47,7 +47,7 @@ public class ContainerService {
 
         this.dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
-        System.out.println("Connecting to Docker at: " + config.getDockerHost())
+        System.out.println("Connecting to Docker at: " + config.getDockerHost());
     }
 
     public List<ContainerInfo> fetchAndSave() {
