@@ -81,7 +81,7 @@ public class ContainerService {
                 .map(container -> ContainerInfo.builder()
                         .id(container.getId().substring(0, 12))
                         .name(container.getNames()[0].replaceFirst("^/", ""))
-                        .status(container.getImage())
+                        .status(container.getStatus())
                         .image(container.getImage())
                         .checkedAt(LocalDateTime.now())
                         .build())
