@@ -9,10 +9,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.util.List;
 
-@CrossOrigin(origins = {
-        "http://192.168.1.173:3002",
-        "http://monitor.ellipsis.local"
-})
 @RestController
 @RequestMapping("/api/containers")
 public class ContainerController {
